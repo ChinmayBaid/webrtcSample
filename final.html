@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Perpendicular Live Feeds Tool</title>		
+		<link rel="stylesheet" type='text/css' href="960.css">
+    </head>
+    <body class="container_12"  style="background-image:url('background.jpg');background-size:cover;">
+        <style>
+            #remotes video {
+                height: 150px;
+            }
+			
+			.videoHolder 
+			{
+				display:block;
+				border-width:10px;
+				border-color:blue;
+				padding:10px;
+				background-color:rgba(255,255,255,0.2);
+			}
+			
+			.videoHolder1
+			{
+				display:block;
+				border-width:10px;
+				padding:10px;
+				background-color:rgba(0,0,0,0.8);
+			}			
+					
+					
+			.myButton {
+				
+				-moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
+				-webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
+				box-shadow:inset 0px 1px 0px 0px #ffffff;
+				
+				background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffffff), color-stop(1, #f6f6f6));
+				background:-moz-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+				background:-webkit-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+				background:-o-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+				background:-ms-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+				background:linear-gradient(to bottom, #ffffff 5%, #f6f6f6 100%);
+				filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f6f6f6',GradientType=0);
+				
+				background-color:#ffffff;
+				
+				-moz-border-radius:10px;
+				-webkit-border-radius:10px;
+				border-radius:10px;
+				
+				border:1px solid #dcdcdc;
+				
+				display:inline-block;
+				color:#666666;
+				font-family:arial;
+				font-size:15px;
+				font-weight:bold;
+				padding:10px 76px;
+				text-decoration:none;
+				
+				text-shadow:0px 1px 0px #ffffff;
+				
+			}
+			.myButton:hover {
+				
+				background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f6f6f6), color-stop(1, #ffffff));
+				background:-moz-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+				background:-webkit-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+				background:-o-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+				background:-ms-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+				background:linear-gradient(to bottom, #f6f6f6 5%, #ffffff 100%);
+				filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f6f6f6', endColorstr='#ffffff',GradientType=0);
+				
+				background-color:#f6f6f6;
+			}
+			.myButton:active {
+				position:relative;				
+			}
+
+
+        </style>
+		
+		
+		<button id="broadcastBtn" style="left:43%;bottom:50px;position:absolute;" class="myButton" onclick="broadCastBtnHandler(event)">Broadcast</button>
+		
+        <div id='localBanda' class='videoHolder' style="right:20px;top:20px;position:fixed;display:none">
+			<video id="localVideo" style="height: 150px;"></video>
+		</div>
+		
+		<div id='remotebande' style="left:20px;top:20px;bottom:20px;height:100%;position:fixed;display:none;">
+			<div id="remotes">
+				
+			</div>
+		</div>
+		
+		<div id='mainBanda' class='videoHolder1' style="left:500px;top:20px;width:800px;position:fixed;display:none;">
+			<video id="mainVideo" autoplay style="height: 100%;width:100%"></video>
+		</div>
+		
+        <script src="jquery.js"></script>
+        <script src="latest.js"></script>
+        <script>
+		
+			var remoteVideoCtr = 0;
+			
+			function handleAddRemoteVideos(remotesDiv, iVideo)
+			{
+				remoteVideoCtr++;
+				var lRemoteVideoDiv = document.createElement('div');				
+				lRemoteVideoDiv.className = "videoHolder";
+				lRemoteVideoDiv.appendChild(iVideo);
+				lRemoteVideoDiv.onclick = function(e)
+				{
+					var lMainVideo = document.getElementById('mainVideo');
+					lMainVideo.src = iVideo.src;
+					document.getElementById("mainBanda").style.display = 'block';				
+				};
+				remotesDiv.appendChild(lRemoteVideoDiv);
+			}
+			
+			function handleRemoveRemoteVideos(remotesDiv, iVideo)
+			{
+				remoteVideoCtr--;
+				remotesDiv.removeChild(iVideo.parentElement);
+			}
+			
+			function broadCastBtnHandler(e)
+			{
+				document.getElementById("localBanda").style.display = 'block';
+				document.getElementById("broadcastBtn").style.display = 'none';
+				document.getElementById("remotebande").style.display = 'block';
+				createWebRtcConnections('localVideo','remotes','45');
+			}
+			
+			
+			function createWebRtcConnections(localVideoStr, remotesVideoStr, iRoomNumber)
+			{
+				// grab the room from the URL
+				var room = iRoomNumber;
+				
+				var lAutoRequestLocalMedia = true;
+				
+				// create our webrtc connection
+				var webrtc = new SimpleWebRTC({
+					// the id/element dom element that will hold "our" video
+					localVideoEl: localVideoStr,
+					// the id/element dom element that will hold remote videos
+					remoteVideosEl: remotesVideoStr,
+					// immediately ask for camera access
+					autoRequestMedia: lAutoRequestLocalMedia,
+					log: true
+				});
+
+				// when it's ready, join if we got a room from the URL
+				webrtc.on('readyToCall', function () {
+					// you can name it anything
+					if (room) webrtc.joinRoom(room);
+				});
+				
+				// Since we use this twice we put it here
+				function setRoom(name) {
+					$('form').remove();
+					$('h1').text(name);
+					$('#subTitle').text('Link to join: ' + location.href);
+					$('body').addClass('active');
+				}
+				
+				setRoom(room);
+			}
+        </script>
+    </body>
+</html>
